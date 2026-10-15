@@ -15,6 +15,46 @@ import type {
   CatalogViewName,
 } from './types.ts';
 
+/**
+ * How the search, sort and filters sit beside the results.
+ * - `split`: two columns on wide screens, with the search, sort and filters in
+ *   the left column and the results (with the Grid / Carousel / List switch) in
+ *   the right. Narrow screens stack them.
+ * - `stacked`: the search and sort sit in a toolbar above the results.
+ * - `auto`: `split` at `sidebarMinItems` items or more, otherwise `stacked`.
+ */
+export type CatalogLayout = 'auto' | 'split' | 'stacked';
+
+/**
+ * What the Show filters and Clear buttons show: their text, an icon and their
+ * text, or just an icon. With `icon` the text is still there for screen readers
+ * (and as a tooltip), only hidden from sight.
+ */
+export type CatalogButtonDisplay = 'text' | 'icon-text' | 'icon';
+
+/**
+ * Wording and icons of the Show filters and Clear buttons. Every field is
+ * optional; leave one out to keep the default.
+ */
+export interface CatalogButtonsOptions {
+  /** `text` (default), `icon-text` or `icon`. */
+  display?: CatalogButtonDisplay;
+  filters?: {
+    /** Text while the filters are collapsed. Default "Show filters". */
+    showText?: string;
+    /** Text while the filters are open. Default "Hide filters". */
+    hideText?: string;
+    /** Icon markup (an inline SVG) replacing the default funnel. */
+    iconHtml?: string;
+  };
+  clear?: {
+    /** Default "Clear search and filters". */
+    text?: string;
+    /** Icon markup (an inline SVG) replacing the default cross. */
+    iconHtml?: string;
+  };
+}
+
 export interface CatalogOptions {
   items: CatalogItem[];
   groups: CatalogGroup[];
@@ -24,14 +64,19 @@ export interface CatalogOptions {
   noun: CatalogNoun;
   searchLabel?: string;
   defaultView?: CatalogViewName;
+  /** The column layout. Default `auto`. */
+  layout?: CatalogLayout;
   /**
-   * With fewer items than this, the search and filters sit in a toolbar above
-   * the results. At or above it they get a left-hand column on wide screens.
+   * For the `auto` layout: with fewer items than this, the search and filters
+   * sit in a toolbar above the results. At or above it they get a left-hand
+   * column on wide screens. Default 8.
    */
   sidebarMinItems?: number;
   /** Prefix for element ids, so several catalogs can share a page. */
   idPrefix?: string;
   sorts?: CatalogSortOption[];
+  /** Icons and wording of the Show filters and Clear buttons. */
+  buttons?: CatalogButtonsOptions;
 }
 
 const ESCAPES: Record<string, string> = {
@@ -48,6 +93,39 @@ export function escapeHtml(value: string): string {
     /[&<>"']/g,
     (character) => ESCAPES[character] ?? character
   );
+}
+
+const ICON_ATTRIBUTES =
+  'viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" focusable="false"';
+
+const DEFAULT_FILTERS_ICON = `<svg ${ICON_ATTRIBUTES}><path d="M3 4h14l-5.5 6.5V16l-3-1.5v-4z"/></svg>`;
+const DEFAULT_CLEAR_ICON = `<svg ${ICON_ATTRIBUTES}><path d="M5 5l10 10M15 5L5 15"/></svg>`;
+
+/**
+ * The content of a button: its text, its icon, or both. The icon is decoration
+ * only, so it is hidden from screen readers and the text stays the button's
+ * name; with an icon-only button the text is hidden from sight, not removed.
+ * `iconHtml` is markup chosen by the page's author, so it is inserted as it
+ * is; never build it from visitor input.
+ */
+function renderButtonContent(
+  text: string,
+  iconHtml: string,
+  display: CatalogButtonDisplay,
+  textAttributes = ''
+): string {
+  const icon =
+    display === 'text'
+      ? ''
+      : `<span class="cc-btn-icon" aria-hidden="true">${iconHtml}</span>`;
+  const textClass =
+    display === 'icon' ? 'cc-btn-text cc-visually-hidden' : 'cc-btn-text';
+  return `${icon}<span class="${textClass}"${textAttributes}>${escapeHtml(text)}</span>`;
+}
+
+/** A tooltip for icon-only buttons, since their text is not visible. */
+function titleAttribute(text: string, display: CatalogButtonDisplay): string {
+  return display === 'icon' ? ` title="${escapeHtml(text)}"` : '';
 }
 
 function renderCard(item: CatalogItem): string {
@@ -122,12 +200,34 @@ export function renderCatalog(options: CatalogOptions): string {
     noun,
     searchLabel = 'Search',
     defaultView = 'carousel',
+    layout: layoutOption = 'auto',
     sidebarMinItems = 8,
     idPrefix = 'catalog',
     sorts = DEFAULT_SORTS,
+    buttons = {},
   } = options;
 
-  const layout = items.length >= sidebarMinItems ? 'sidebar' : 'toolbar';
+  const display: CatalogButtonDisplay = buttons.display ?? 'text';
+  const showFiltersText = buttons.filters?.showText ?? 'Show filters';
+  const hideFiltersText = buttons.filters?.hideText ?? 'Hide filters';
+  const filtersButtonContent = renderButtonContent(
+    showFiltersText,
+    buttons.filters?.iconHtml ?? DEFAULT_FILTERS_ICON,
+    display,
+    ' data-catalog-filters-toggle-label'
+  );
+  const clearText = buttons.clear?.text ?? 'Clear search and filters';
+  const clearButtonContent = renderButtonContent(
+    clearText,
+    buttons.clear?.iconHtml ?? DEFAULT_CLEAR_ICON,
+    display
+  );
+
+  const split =
+    layoutOption === 'split' ||
+    (layoutOption === 'auto' && items.length >= sidebarMinItems);
+  // `sidebar` and `toolbar` are the values styles and the controller key off.
+  const layout = split ? 'sidebar' : 'toolbar';
   const grouped = groupItems(groups, items);
   const groupFacet: CatalogFacet = {
     key: GROUP_FACET_KEY,
@@ -162,11 +262,11 @@ export function renderCatalog(options: CatalogOptions): string {
 <label class="cc-label" for="${id('sort')}">Sort by</label>
 <select class="cc-input" id="${id('sort')}" name="sort" data-catalog-sort>${sortOptions}</select>
 </div>
-<button type="button" class="cc-button cc-toggle" data-catalog-filters-toggle aria-expanded="false" aria-controls="${id('facets')}" hidden><span data-catalog-filters-toggle-label>Show filters</span></button>
+<button type="button" class="cc-button cc-toggle" data-catalog-filters-toggle${titleAttribute(showFiltersText, display)} data-show-text="${escapeHtml(showFiltersText)}" data-hide-text="${escapeHtml(hideFiltersText)}" aria-expanded="false" aria-controls="${id('facets')}" hidden>${filtersButtonContent}</button>
 <div class="cc-facets" id="${id('facets')}" data-catalog-facets>
 ${allFacets.map((facet) => renderFacet(facet, items)).join('\n')}
 </div>
-<div class="cc-field"><button type="button" class="cc-button" data-catalog-clear>Clear search and filters</button></div>
+<div class="cc-field"><button type="button" class="cc-button" data-catalog-clear${titleAttribute(clearText, display)}>${clearButtonContent}</button></div>
 </form>
 </aside>
 <div class="cc-main">

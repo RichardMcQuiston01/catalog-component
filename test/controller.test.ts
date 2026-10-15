@@ -219,6 +219,26 @@ describe('mountCatalog', () => {
     ).toBe('Hide filters');
   });
 
+  test('the filters button uses the custom wording and keeps an icon-only tooltip in step', () => {
+    const { root } = setUp({
+      buttons: {
+        display: 'icon',
+        filters: { showText: 'Refine', hideText: 'Done' },
+      },
+    });
+    const toggle = root.querySelector<HTMLButtonElement>(
+      '[data-catalog-filters-toggle]'
+    )!;
+    const label = root.querySelector('[data-catalog-filters-toggle-label]')!;
+    expect(label.textContent).toBe('Refine');
+    toggle.click();
+    expect(label.textContent).toBe('Done');
+    expect(toggle.title).toBe('Done');
+    toggle.click();
+    expect(label.textContent).toBe('Refine');
+    expect(toggle.title).toBe('Refine');
+  });
+
   test('opens the filters when the URL already has filters in it', () => {
     window.history.replaceState(null, '', '/?price=free');
     const { root } = setUp();

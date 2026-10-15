@@ -95,15 +95,43 @@ browser.
 | `noun`            | What items are called, for the result message ("3 add-ins shown").                |
 | `searchLabel`     | Label of the search box. Default `Search`.                                        |
 | `defaultView`     | `grid`, `carousel` (default) or `list`.                                           |
-| `sidebarMinItems` | At this many items or more, filters get a left column on wide screens. Default 8. |
+| `layout`          | `split` (two columns), `stacked` (toolbar above the results) or `auto` (default). |
+| `sidebarMinItems` | For `auto`: at this many items or more, use `split`. Default 8.                   |
+| `buttons`         | Icons and wording of the Show filters and Clear buttons (see below).              |
 | `idPrefix`        | Prefix for element ids, so several catalogs can share a page.                     |
 | `sorts`           | Sort choices. Default: name A to Z, name Z to A, newest first.                    |
 
+#### Button icons and wording
+
+```ts
+renderCatalog({
+  // ...
+  buttons: {
+    display: 'icon-text', // 'text' (default), 'icon-text' or 'icon'
+    filters: { showText: 'Refine', hideText: 'Done', iconHtml: '<svg>…</svg>' },
+    clear: { text: 'Start over', iconHtml: '<svg>…</svg>' },
+  },
+});
+```
+
+- `display` picks text only, an icon with its text, or an icon alone. With
+  `icon` the text is only hidden from sight: screen readers still read it, and
+  it shows as a tooltip.
+- Every other field is optional and replaces the default text or icon. The
+  default icons are a funnel and a cross, drawn in the text colour.
+- `iconHtml` is inserted as markup (use an inline SVG with
+  `stroke="currentColor"` or `fill="currentColor"` so it follows the button's
+  colour). It is meant to be written by you, so never build it from visitor
+  input. All text is escaped.
+
 #### Behaviour
 
-- **Layout.** With fewer than `sidebarMinItems` items, search and sort sit in a
-  toolbar above the results and the filters collapse behind a button. With more,
-  wide screens get a left-hand column; narrow screens use the button.
+- **Layout.** `split` gives wide screens two columns: the search, sort and
+  filters in the left column, and the results with the Grid / Carousel / List
+  switch in the right. `stacked` puts search and sort in a toolbar above the
+  results, with the filters collapsed behind a button. `auto` (the default)
+  uses `split` at `sidebarMinItems` items or more, otherwise `stacked`. Narrow
+  screens always stack, with the filters behind the button.
 - **Views.** Grid, Carousel (scroll-snap with arrow buttons that appear only when
   a row overflows) and List. The visitor's choice is remembered.
 - **State in the URL.** `?q=hinge&price=free&sort=newest&view=list`, so a view can

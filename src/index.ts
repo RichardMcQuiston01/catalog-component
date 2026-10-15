@@ -1,5 +1,10 @@
 export { renderCatalog, escapeHtml } from './render.ts';
-export type { CatalogOptions } from './render.ts';
+export type {
+  CatalogButtonDisplay,
+  CatalogButtonsOptions,
+  CatalogLayout,
+  CatalogOptions,
+} from './render.ts';
 export { mountCatalog, mountAllCatalogs } from './controller.ts';
 export type { CatalogHandle, MountOptions } from './controller.ts';
 export {

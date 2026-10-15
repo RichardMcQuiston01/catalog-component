@@ -59,15 +59,106 @@ describe('renderCatalog', () => {
     expect(container.textContent).not.toContain('Empty group');
   });
 
-  test('uses a toolbar layout below the threshold and a sidebar at or above it', () => {
-    expect(
-      render().querySelector('[data-catalog]')?.getAttribute('data-layout')
-    ).toBe('toolbar');
-    expect(
-      render({ sidebarMinItems: 4 })
+  test('auto layout uses a toolbar below the threshold and a sidebar at or above it', () => {
+    const layoutOf = (options?: Parameters<typeof render>[0]): string | null =>
+      render(options)
         .querySelector('[data-catalog]')
-        ?.getAttribute('data-layout')
+        ?.getAttribute('data-layout') ?? null;
+    expect(layoutOf()).toBe('toolbar');
+    expect(layoutOf({ sidebarMinItems: 4 })).toBe('sidebar');
+    expect(layoutOf({ layout: 'auto', sidebarMinItems: 4 })).toBe('sidebar');
+  });
+
+  test('the split layout always has the left column, even with few items', () => {
+    const container = render({ layout: 'split' });
+    expect(
+      container.querySelector('[data-catalog]')?.getAttribute('data-layout')
     ).toBe('sidebar');
+    const aside = container.querySelector('.cc-layout > .cc-aside');
+    const main = container.querySelector('.cc-layout > .cc-main');
+    expect(aside?.querySelector('[data-catalog-search]')).not.toBeNull();
+    expect(aside?.querySelector('[data-catalog-sort]')).not.toBeNull();
+    expect(aside?.querySelector('[data-catalog-facet]')).not.toBeNull();
+    expect(main?.querySelector('[data-catalog-view]')).not.toBeNull();
+    expect(main?.querySelector('[data-catalog-results]')).not.toBeNull();
+  });
+
+  test('the stacked layout keeps the toolbar even with many items', () => {
+    const container = render({ layout: 'stacked', sidebarMinItems: 1 });
+    expect(
+      container.querySelector('[data-catalog]')?.getAttribute('data-layout')
+    ).toBe('toolbar');
+  });
+
+  describe('buttons', () => {
+    const toggleOf = (container: HTMLElement): HTMLElement =>
+      container.querySelector<HTMLElement>('[data-catalog-filters-toggle]')!;
+    const clearOf = (container: HTMLElement): HTMLElement =>
+      container.querySelector<HTMLElement>('[data-catalog-clear]')!;
+
+    test('show text only by default, with the usual wording', () => {
+      const container = render();
+      expect(container.querySelector('.cc-btn-icon')).toBeNull();
+      expect(toggleOf(container).textContent).toBe('Show filters');
+      expect(clearOf(container).textContent).toBe('Clear search and filters');
+      expect(toggleOf(container).hasAttribute('title')).toBe(false);
+    });
+
+    test('icon-text puts a decorative icon before the text on both buttons', () => {
+      const container = render({ buttons: { display: 'icon-text' } });
+      for (const button of [toggleOf(container), clearOf(container)]) {
+        const icon = button.querySelector('.cc-btn-icon');
+        expect(icon?.getAttribute('aria-hidden')).toBe('true');
+        expect(icon?.querySelector('svg')).not.toBeNull();
+        expect(button.querySelector('.cc-btn-text')).not.toBeNull();
+        expect(button.querySelector('.cc-visually-hidden')).toBeNull();
+      }
+      expect(toggleOf(container).textContent).toBe('Show filters');
+    });
+
+    test('icon hides the text from sight but keeps it for screen readers', () => {
+      const container = render({ buttons: { display: 'icon' } });
+      for (const button of [toggleOf(container), clearOf(container)]) {
+        expect(button.querySelector('.cc-btn-icon svg')).not.toBeNull();
+        expect(
+          button.querySelector('.cc-btn-text.cc-visually-hidden')
+        ).not.toBeNull();
+      }
+      expect(toggleOf(container).textContent).toBe('Show filters');
+      expect(toggleOf(container).getAttribute('title')).toBe('Show filters');
+      expect(clearOf(container).getAttribute('title')).toBe(
+        'Clear search and filters'
+      );
+    });
+
+    test('the wording can be replaced, and is escaped', () => {
+      const container = render({
+        buttons: {
+          filters: { showText: 'Refine <b>', hideText: 'Done' },
+          clear: { text: 'Start over' },
+        },
+      });
+      expect(toggleOf(container).textContent).toBe('Refine <b>');
+      expect(toggleOf(container).querySelector('b')).toBeNull();
+      expect(toggleOf(container).getAttribute('data-hide-text')).toBe('Done');
+      expect(clearOf(container).textContent).toBe('Start over');
+    });
+
+    test('the icons can be replaced, and only show when icons are on', () => {
+      const custom = '<svg data-custom-icon viewBox="0 0 1 1"></svg>';
+      const withIcons = render({
+        buttons: {
+          display: 'icon-text',
+          filters: { iconHtml: custom },
+          clear: { iconHtml: custom },
+        },
+      });
+      expect(withIcons.querySelectorAll('[data-custom-icon]').length).toBe(2);
+      const textOnly = render({
+        buttons: { filters: { iconHtml: custom }, clear: { iconHtml: custom } },
+      });
+      expect(textOnly.querySelector('[data-custom-icon]')).toBeNull();
+    });
   });
 
   test('gives every control a label and groups checkboxes in fieldsets', () => {
