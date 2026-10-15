@@ -15,6 +15,16 @@ import type {
   CatalogViewName,
 } from './types.ts';
 
+/**
+ * How the search, sort and filters sit beside the results.
+ * - `split`: two columns on wide screens, with the search, sort and filters in
+ *   the left column and the results (with the Grid / Carousel / List switch) in
+ *   the right. Narrow screens stack them.
+ * - `stacked`: the search and sort sit in a toolbar above the results.
+ * - `auto`: `split` at `sidebarMinItems` items or more, otherwise `stacked`.
+ */
+export type CatalogLayout = 'auto' | 'split' | 'stacked';
+
 export interface CatalogOptions {
   items: CatalogItem[];
   groups: CatalogGroup[];
@@ -24,9 +34,12 @@ export interface CatalogOptions {
   noun: CatalogNoun;
   searchLabel?: string;
   defaultView?: CatalogViewName;
+  /** The column layout. Default `auto`. */
+  layout?: CatalogLayout;
   /**
-   * With fewer items than this, the search and filters sit in a toolbar above
-   * the results. At or above it they get a left-hand column on wide screens.
+   * For the `auto` layout: with fewer items than this, the search and filters
+   * sit in a toolbar above the results. At or above it they get a left-hand
+   * column on wide screens. Default 8.
    */
   sidebarMinItems?: number;
   /** Prefix for element ids, so several catalogs can share a page. */
@@ -122,12 +135,17 @@ export function renderCatalog(options: CatalogOptions): string {
     noun,
     searchLabel = 'Search',
     defaultView = 'carousel',
+    layout: layoutOption = 'auto',
     sidebarMinItems = 8,
     idPrefix = 'catalog',
     sorts = DEFAULT_SORTS,
   } = options;
 
-  const layout = items.length >= sidebarMinItems ? 'sidebar' : 'toolbar';
+  const split =
+    layoutOption === 'split' ||
+    (layoutOption === 'auto' && items.length >= sidebarMinItems);
+  // `sidebar` and `toolbar` are the values styles and the controller key off.
+  const layout = split ? 'sidebar' : 'toolbar';
   const grouped = groupItems(groups, items);
   const groupFacet: CatalogFacet = {
     key: GROUP_FACET_KEY,
