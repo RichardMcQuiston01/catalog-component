@@ -59,15 +59,35 @@ describe('renderCatalog', () => {
     expect(container.textContent).not.toContain('Empty group');
   });
 
-  test('uses a toolbar layout below the threshold and a sidebar at or above it', () => {
-    expect(
-      render().querySelector('[data-catalog]')?.getAttribute('data-layout')
-    ).toBe('toolbar');
-    expect(
-      render({ sidebarMinItems: 4 })
+  test('auto layout uses a toolbar below the threshold and a sidebar at or above it', () => {
+    const layoutOf = (options?: Parameters<typeof render>[0]): string | null =>
+      render(options)
         .querySelector('[data-catalog]')
-        ?.getAttribute('data-layout')
+        ?.getAttribute('data-layout') ?? null;
+    expect(layoutOf()).toBe('toolbar');
+    expect(layoutOf({ sidebarMinItems: 4 })).toBe('sidebar');
+    expect(layoutOf({ layout: 'auto', sidebarMinItems: 4 })).toBe('sidebar');
+  });
+
+  test('the split layout always has the left column, even with few items', () => {
+    const container = render({ layout: 'split' });
+    expect(
+      container.querySelector('[data-catalog]')?.getAttribute('data-layout')
     ).toBe('sidebar');
+    const aside = container.querySelector('.cc-layout > .cc-aside');
+    const main = container.querySelector('.cc-layout > .cc-main');
+    expect(aside?.querySelector('[data-catalog-search]')).not.toBeNull();
+    expect(aside?.querySelector('[data-catalog-sort]')).not.toBeNull();
+    expect(aside?.querySelector('[data-catalog-facet]')).not.toBeNull();
+    expect(main?.querySelector('[data-catalog-view]')).not.toBeNull();
+    expect(main?.querySelector('[data-catalog-results]')).not.toBeNull();
+  });
+
+  test('the stacked layout keeps the toolbar even with many items', () => {
+    const container = render({ layout: 'stacked', sidebarMinItems: 1 });
+    expect(
+      container.querySelector('[data-catalog]')?.getAttribute('data-layout')
+    ).toBe('toolbar');
   });
 
   test('gives every control a label and groups checkboxes in fieldsets', () => {
