@@ -97,8 +97,32 @@ browser.
 | `defaultView`     | `grid`, `carousel` (default) or `list`.                                           |
 | `layout`          | `split` (two columns), `stacked` (toolbar above the results) or `auto` (default). |
 | `sidebarMinItems` | For `auto`: at this many items or more, use `split`. Default 8.                   |
+| `buttons`         | Icons and wording of the Show filters and Clear buttons (see below).              |
 | `idPrefix`        | Prefix for element ids, so several catalogs can share a page.                     |
 | `sorts`           | Sort choices. Default: name A to Z, name Z to A, newest first.                    |
+
+#### Button icons and wording
+
+```ts
+renderCatalog({
+  // ...
+  buttons: {
+    display: 'icon-text', // 'text' (default), 'icon-text' or 'icon'
+    filters: { showText: 'Refine', hideText: 'Done', iconHtml: '<svg>…</svg>' },
+    clear: { text: 'Start over', iconHtml: '<svg>…</svg>' },
+  },
+});
+```
+
+- `display` picks text only, an icon with its text, or an icon alone. With
+  `icon` the text is only hidden from sight: screen readers still read it, and
+  it shows as a tooltip.
+- Every other field is optional and replaces the default text or icon. The
+  default icons are a funnel and a cross, drawn in the text colour.
+- `iconHtml` is inserted as markup (use an inline SVG with
+  `stroke="currentColor"` or `fill="currentColor"` so it follows the button's
+  colour). It is meant to be written by you, so never build it from visitor
+  input. All text is escaped.
 
 #### Behaviour
 
