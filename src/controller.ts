@@ -299,7 +299,13 @@ export function mountCatalog(
     toggleButton.hidden = !collapsible;
     facetsPanel.hidden = collapsible && !filtersExpanded;
     toggleButton.setAttribute('aria-expanded', String(!facetsPanel.hidden));
-    toggleLabel.textContent = filtersExpanded ? 'Hide filters' : 'Show filters';
+    const label = filtersExpanded
+      ? (toggleButton.dataset.hideText ?? 'Hide filters')
+      : (toggleButton.dataset.showText ?? 'Show filters');
+    toggleLabel.textContent = label;
+    if (toggleButton.hasAttribute('title')) {
+      toggleButton.title = label;
+    }
   }
 
   // ----- Wiring -----

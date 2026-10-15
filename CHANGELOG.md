@@ -4,6 +4,8 @@
 
 ## 0.2.0
 
+- New `buttons` option: show the Show filters and Clear buttons as text only
+  (default), icon with text, or icon only, and replace their wording and icons.
 - New `layout` option: `split` (always two columns: search, sort and filters on
   the left, results and the view switch on the right), `stacked` (always a
   toolbar above the results) or `auto` (the previous behaviour, still the
