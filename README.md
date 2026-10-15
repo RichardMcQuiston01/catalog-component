@@ -1,4 +1,4 @@
-# Project Title
+# @richardmcquiston01/custom-catalog-component
 
 - Author: [Richard McQuiston](mailto:richard.mcquiston@gmail.com)
 - Website: https://richardmcquiston.com/
@@ -8,6 +8,8 @@
 | [Overview](#overview) | [Getting Started](#getting-started) | [Buy Me a Coffee](#buy-me-a-coffee) | [License](#license) | [Copyright](#copyright) |
 
 ## Overview
+
+Framework agnostic TypeScript package for a reusable catalog component.  Two-Column view with support for Filters, Sorting, and toggling between Grid, Carousel, and List view styles.
 
 [Back to Top](#table-of-contents)
 
