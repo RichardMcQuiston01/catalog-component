@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 0.2.1 - 2026-10-19
+
+- Add a `funding` entry to `package.json`, so `npm fund` and the npm page show
+  the donate link.
+
 ## 0.2.0 - 2026-10-15
 
 - New `buttons` option: show the Show filters and Clear buttons as text only
