@@ -1,6 +1,6 @@
 {
   "name": "@richardmcquiston01/custom-catalog-component",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Framework-agnostic, accessible catalog view: a two-column layout with search, filters, sorting, and a Grid / Carousel / List switch.",
   "license": "Apache-2.0",
   "author": "Richard McQuiston <richard.mcquiston@gmail.com> (https://richardmcquiston.com/)",
